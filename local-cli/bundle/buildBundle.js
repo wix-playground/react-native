@@ -129,7 +129,7 @@ function buildBundle(
       resetCache: args.resetCache,
       reporter: new TerminalReporter(terminal),
       runBeforeMainModule: config.runBeforeMainModule,
-      sourceExts: defaultSourceExts.concat(sourceExts),
+      sourceExts: sourceExts.concat(defaultSourceExts),
       transformCache: TransformCaching.useTempDir(),
       transformModulePath: transformModulePath,
       useDeltaBundler: false,

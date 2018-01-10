@@ -1,5 +1,5 @@
 {
-  "name": "wix-react-native",
+  "name": "react-native",
   "version": "0.51.100",
   "description": "A framework for building native apps using React",
   "license": "BSD-3-Clause",
@@ -9,6 +9,9 @@
   },
   "engines": {
     "node": ">=4"
+  },
+  "publishConfig": {
+    "registry": "http://repo.dev.wixpress.com/artifactory/api/npm/npm-local/"
   },
   "jest": {
     "transform": {

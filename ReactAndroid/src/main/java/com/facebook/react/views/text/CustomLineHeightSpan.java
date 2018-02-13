@@ -47,8 +47,13 @@ public class CustomLineHeightSpan implements LineHeightSpan {
     } else {
       // Show proportionally additional ascent and top
       final int additional = mHeight - (-fm.top + fm.bottom);
-      fm.top -= additional;
-      fm.ascent -= additional;
+
+      // Round up for the negative values and down for the positive values  (arbritary choice)
+      // So that bottom - top equals additional even if it's an odd number.
+      fm.top -= Math.ceil(additional / 2.0f);
+      fm.bottom += Math.floor(additional / 2.0f);
+      fm.ascent = fm.top;
+      fm.descent = fm.bottom;
     }
   }
 }

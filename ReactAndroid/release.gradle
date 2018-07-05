@@ -8,19 +8,19 @@ apply plugin: 'signing'
 // 2) To upload artifact to maven central use: :uploadArchives (you'd need to have the permission to do that)
 
 def isReleaseBuild() {
-    return VERSION_NAME.contains('SNAPSHOT') == false
+    return !VERSION_NAME.contains('SNAPSHOT')
 }
 
 def getRepositoryUrl() {
-    return hasProperty('repositoryUrl') ? property('repositoryUrl') : 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    return hasProperty('repositoryUrl') ? findProperty('repositoryUrl') : 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
 }
 
 def getRepositoryUsername() {
-    return hasProperty('repositoryUsername') ? property('repositoryUsername') : ''
+    return hasProperty('repositoryUsername') ? findProperty('repositoryUsername') : ''
 }
 
 def getRepositoryPassword() {
-    return hasProperty('repositoryPassword') ? property('repositoryPassword') : ''
+    return hasProperty('repositoryPassword') ? findProperty('repositoryPassword') : ''
 }
 
 def configureReactNativePom(def pom) {

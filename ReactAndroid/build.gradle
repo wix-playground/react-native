@@ -128,7 +128,7 @@ task downloadJSCHeaders() << {
     project.mkdir(output)
     exec {
         workingDir "${output}"
-        commandLine("svn export ${headersUrl}".split(" "))
+        commandLine("svn export -q ${headersUrl}".split(" "))
     }
     project.delete("${output}/API/tests")
     file("${output}/API").renameTo("${output}/JavaScriptCore")

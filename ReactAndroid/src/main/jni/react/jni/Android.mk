@@ -32,17 +32,14 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../..
 
 LOCAL_CFLAGS += \
- -Werror \
  -fvisibility=hidden \
  -fexceptions \
  -frtti \
  -Wno-pessimizing-move \
  -Wno-inconsistent-missing-override \
- -Wno-unused-lambda-capture
-
-CXX11_FLAGS := -std=c++11
-LOCAL_CFLAGS += $(CXX11_FLAGS)
-LOCAL_EXPORT_CPPFLAGS := $(CXX11_FLAGS)
+ -Wno-unused-lambda-capture \
+ -Wno-unused-const-variable \
+ -Wno-mismatched-tags
 
 LOCAL_LDLIBS += -landroid
 LOCAL_SHARED_LIBRARIES := libfolly_json libfb libjsc libglog_init libyoga libprivatedata

@@ -135,7 +135,7 @@ task downloadJSCHeaders() << {
 }
 
 task downloadJSC(type: Download) {
-    src "https://registry.npmjs.org/jsc-android/-/jsc-android-224109.0.0.tgz"
+    src "https://registry.npmjs.org/jsc-android/-/jsc-android-224109.1.0.tgz"
     onlyIfNewer true
     overwrite false
     dest new File(downloadsDir, 'jsc.tar.gz')

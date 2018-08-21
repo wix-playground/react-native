@@ -7,14 +7,10 @@ releaseVersion.patch += 100;
 releaseVersion.version = `${releaseVersion.major}.${releaseVersion.minor}.${releaseVersion.patch}`;
 releaseVersion.raw = releaseVersion.version;
 
+echo(`Building ${releaseVersion}, make sure you are using the private artifactory credentials`);
 exec(`scripts/bump-oss-version.js ${releaseVersion}`);
-
-// -------- Generating Android Artifacts with JavaDoc
-if (exec('./gradlew clean :ReactAndroid:installArchives').code) {
-  echo('Couldn\'t generate artifacts');
-  exit(1);
-}
-
+exec('./gradlew clean :ReactAndroid:installArchives');
+echo(`Publishing to npm ${releaseVersion}...`);
 exec('npm publish');
 echo(`Published to npm ${releaseVersion}`);
 

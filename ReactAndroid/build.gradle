@@ -29,6 +29,11 @@ def dependenciesPath = System.getenv("REACT_NATIVE_DEPENDENCIES")
 // and the build will use that.
 def boostPath = dependenciesPath ?: System.getenv("REACT_NATIVE_BOOST_PATH")
 
+def JSC_VERSION = "224109.1.0"
+def JSC_REVISION = "r" + (JSC_VERSION.split('\\.')[0])
+def WEBKIT_VERSION = "2.18.2"
+println "\n\n\tUsing JavaScriptCore version ${JSC_VERSION} revision ${JSC_REVISION} from WebkitGTK ${WEBKIT_VERSION}\n\n"
+
 task createNativeDepsDirectories {
     downloadsDir.mkdirs()
     thirdPartyNdkDir.mkdirs()
@@ -122,7 +127,7 @@ task prepareGlog(dependsOn: dependenciesPath ? [] : [downloadGlog], type: Copy) 
 }
 
 task downloadJSCHeaders() << {
-    def headersUrl = "https://svn.webkit.org/repository/webkit/releases/WebKitGTK/webkit-2.18.2/Source/JavaScriptCore/API/"
+    def headersUrl = "https://svn.webkit.org/repository/webkit/releases/WebKitGTK/webkit-${WEBKIT_VERSION}/Source/JavaScriptCore/API/"
     def output = "${downloadsDir}/jsc-include"
     project.delete(output)
     project.mkdir(output)
@@ -135,7 +140,7 @@ task downloadJSCHeaders() << {
 }
 
 task downloadJSC(type: Download) {
-    src "https://registry.npmjs.org/jsc-android/-/jsc-android-224109.1.0.tgz"
+    src "https://registry.npmjs.org/jsc-android/-/jsc-android-${JSC_VERSION}.tgz"
     onlyIfNewer true
     overwrite false
     dest new File(downloadsDir, 'jsc.tar.gz')
@@ -150,7 +155,7 @@ task prepareJSC(dependsOn: [downloadJSCHeaders, downloadJSC]) << {
     copy {
         from 'src/main/jni/third-party/jsc/Android.mk'
         from "${downloadsDir}/jsc-include"
-        from zipTree("${downloadsDir}/jsc/package/dist/org/webkit/android-jsc/r224109/android-jsc-r224109.aar")
+        from zipTree("${downloadsDir}/jsc/package/dist/org/webkit/android-jsc-intl/${JSC_REVISION}/android-jsc-intl-${JSC_REVISION}.aar")
         include '**/*.so', '**/*.h', 'Android.mk'
         into "$thirdPartyNdkDir/jsc"
     }

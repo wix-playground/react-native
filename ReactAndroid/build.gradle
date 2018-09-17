@@ -236,6 +236,12 @@ task cleanReactNdkLib(type: Exec) {
             "REACT_COMMON_DIR=$projectDir/../ReactCommon",
             '-C', file('src/main/jni/react/jni').absolutePath,
             'clean'
+
+ 	doLast {
+      def dist = file(project.tasks.getByName('installArchives').repositories.mavenDeployer.repository.url)
+      println "deleting ${dist}"
+      dist.deleteDir()
+    }
 }
 
 task packageReactNdkLibs(dependsOn: buildReactNdkLib, type: Copy) {

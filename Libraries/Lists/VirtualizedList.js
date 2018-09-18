@@ -671,6 +671,10 @@ class VirtualizedList extends React.PureComponent<Props, State> {
       getItemCount,
       horizontal,
       keyExtractor,
+      getItemLayout,
+      renderItem,
+      extraData,
+      debug,
     } = this.props;
     const stickyOffset = this.props.ListHeaderComponent ? 1 : 0;
     const end = getItemCount(data) - 1;
@@ -696,9 +700,12 @@ class VirtualizedList extends React.PureComponent<Props, State> {
           key={key}
           prevCellKey={prevCellKey}
           onUpdateSeparators={this._onUpdateSeparators}
-          onLayout={e => this._onCellLayout(e, key, ii)}
+          onLayout={this._onCellLayout}
           onUnmount={this._onCellUnmount}
-          parentProps={this.props}
+          getItemLayout={getItemLayout}
+          renderItem={renderItem}
+          debug={debug}
+          extraData={extraData}
           ref={ref => {
             this._cellRefs[key] = ref;
           }}
@@ -1063,7 +1070,7 @@ class VirtualizedList extends React.PureComponent<Props, State> {
     }
   };
 
-  _onCellLayout(e, cellKey, index) {
+  _onCellLayout = (e, cellKey, index): void => {
     const layout = e.nativeEvent.layout;
     const next = {
       offset: this._selectOffset(layout),
@@ -1103,7 +1110,7 @@ class VirtualizedList extends React.PureComponent<Props, State> {
     }
 
     this._computeBlankness();
-  }
+  };
 
   _onCellUnmount = (cellKey: string) => {
     const curr = this._frames[cellKey];
@@ -1623,7 +1630,7 @@ class VirtualizedList extends React.PureComponent<Props, State> {
   }
 }
 
-class CellRenderer extends React.Component<
+class CellRenderer extends React.PureComponent<
   {
     CellRendererComponent?: ?React.ComponentType<any>,
     ItemSeparatorComponent: ?React.ComponentType<*>,
@@ -1633,14 +1640,13 @@ class CellRenderer extends React.Component<
     index: number,
     inversionStyle: ?DangerouslyImpreciseStyleProp,
     item: Item,
-    onLayout: (event: Object) => void, // This is extracted by ScrollViewStickyHeader
+    onLayout: (event: Object, key: string, index: number) => void, // This is extracted by ScrollViewStickyHeader
     onUnmount: (cellKey: string) => void,
     onUpdateSeparators: (cellKeys: Array<?string>, props: Object) => void,
-    parentProps: {
-      getItemLayout?: ?Function,
-      renderItem: renderItemType,
-    },
     prevCellKey: ?string,
+    getItemLayout?: ?Function,
+    renderItem: renderItemType,
+    debug: ?boolean,
   },
   $FlowFixMeState,
 > {
@@ -1699,6 +1705,10 @@ class CellRenderer extends React.Component<
     this.props.onUnmount(this.props.cellKey);
   }
 
+  _onLayout = (e): void =>
+    this.props.onLayout &&
+    this.props.onLayout(e, this.props.cellKey, this.props.index);
+
   render() {
     const {
       CellRendererComponent,
@@ -1708,9 +1718,10 @@ class CellRenderer extends React.Component<
       item,
       index,
       inversionStyle,
-      parentProps,
+      renderItem,
+      getItemLayout,
+      debug,
     } = this.props;
-    const {renderItem, getItemLayout} = parentProps;
     invariant(renderItem, 'no renderItem!');
     const element = renderItem({
       item,
@@ -1721,9 +1732,9 @@ class CellRenderer extends React.Component<
       /* $FlowFixMe(>=0.68.0 site=react_native_fb) This comment suppresses an
        * error found when Flow v0.68 was deployed. To see the error delete this
        * comment and run Flow. */
-      getItemLayout && !parentProps.debug && !fillRateHelper.enabled()
+      getItemLayout && !debug && !fillRateHelper.enabled()
         ? undefined
-        : this.props.onLayout;
+        : this._onLayout;
     // NOTE: that when this is a sticky header, `onLayout` will get automatically extracted and
     // called explicitly by `ScrollViewStickyHeader`.
     const itemSeparator = ItemSeparatorComponent && (

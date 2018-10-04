@@ -125,6 +125,7 @@ task prepareGlog(dependsOn: dependenciesPath ? [] : [downloadGlog], type: Copy) 
     into "$thirdPartyNdkDir/glog"
 }
 
+//TODO
 task downloadJSCHeaders(type: Download) {
     // in sync with webkit SVN revision 174650
     def jscAPIBaseURL = 'https://raw.githubusercontent.com/WebKit/webkit/38b15a3ba3c1b0798f2036f7cea36ffdc096202e/Source/JavaScriptCore/API/'
@@ -138,6 +139,7 @@ task downloadJSCHeaders(type: Download) {
 }
 
 // Create Android.mk library module based on so files from mvn + include headers fetched from webkit.org
+//TODO
 task prepareJSC(dependsOn: dependenciesPath ? [] : [downloadJSCHeaders]) << {
     copy {
         from zipTree(configurations.compile.fileCollection { dep -> dep.name == 'android-jsc' }.singleFile)
@@ -225,12 +227,20 @@ task buildReactNdkLib(dependsOn: [prepareJSC, prepareBoost, prepareDoubleConvers
 }
 
 task cleanReactNdkLib(type: Exec) {
+    ignoreExitValue = true
+    standardOutput = new ByteArrayOutputStream()
+    errorOutput = standardOutput
     commandLine getNdkBuildFullPath(),
             "NDK_APPLICATION_MK=$projectDir/src/main/jni/Application.mk",
             "THIRD_PARTY_NDK_DIR=$buildDir/third-party-ndk",
             "REACT_COMMON_DIR=$projectDir/../ReactCommon",
             '-C', file('src/main/jni/react/jni').absolutePath,
             'clean'
+    doLast {
+      def dist = file(project.tasks.getByName('installArchives').repositories.mavenDeployer.repository.url)
+      println "deleting ${dist}"
+      dist.deleteDir()
+    }
 }
 
 task packageReactNdkLibs(dependsOn: buildReactNdkLib, type: Copy) {
@@ -246,11 +256,10 @@ task packageReactNdkLibsForBuck(dependsOn: packageReactNdkLibs, type: Copy) {
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "27.0.3"
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 26
+        minSdkVersion 21
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
 

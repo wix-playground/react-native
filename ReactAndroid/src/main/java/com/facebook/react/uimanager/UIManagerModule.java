@@ -124,6 +124,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule implements
   public UIManagerModule(
       ReactApplicationContext reactContext,
       ViewManagerResolver viewManagerResolver,
+      UIImplementationProvider uiImplementationProvider,
       int minTimeLeftInFrameForNonBatchedOperationMs) {
     super(reactContext);
     DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(reactContext);
@@ -131,7 +132,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule implements
     mModuleConstants = createConstants(viewManagerResolver);
     mCustomDirectEvents = UIManagerModuleConstants.getDirectEventTypeConstants();
     mUIImplementation =
-        new UIImplementation(
+        uiImplementationProvider.createUIImplementation(
             reactContext,
             viewManagerResolver,
             mEventDispatcher,
@@ -143,6 +144,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule implements
   public UIManagerModule(
       ReactApplicationContext reactContext,
       List<ViewManager> viewManagersList,
+      UIImplementationProvider uiImplementationProvider,
       int minTimeLeftInFrameForNonBatchedOperationMs) {
     super(reactContext);
     DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(reactContext);
@@ -150,7 +152,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule implements
     mCustomDirectEvents = MapBuilder.newHashMap();
     mModuleConstants = createConstants(viewManagersList, null, mCustomDirectEvents);
     mUIImplementation =
-        new UIImplementation(
+        uiImplementationProvider.createUIImplementation(
             reactContext,
             viewManagersList,
             mEventDispatcher,

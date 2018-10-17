@@ -30,13 +30,13 @@ let branch = exec('git symbolic-ref --short HEAD', {
   silent: true,
 }).stdout.trim();
 
-if (branch.indexOf('-stable') === -1) {
-  echo('You must be in 0.XX-stable branch to bump a version');
-  exit(1);
-}
+//if (branch.indexOf('-stable') === -1) {
+//  echo('You must be in 0.XX-stable branch to bump a version');
+//  exit(1);
+//}
 
 // e.g. 0.33
-let versionMajor = branch.slice(0, branch.indexOf('-stable'));
+//let versionMajor = branch.slice(0, branch.indexOf('-stable'));
 
 // - check that argument version matches branch
 // e.g. 0.33.1 or 0.33.0-rc4

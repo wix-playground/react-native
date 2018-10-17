@@ -89,7 +89,7 @@ android {
 
     defaultConfig {
         applicationId "com.facebook.react.uiapp"
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -145,4 +145,14 @@ dependencies {
 
     // Build React Native from source
     implementation project(':ReactAndroid')
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.name == 'android-jsc') {
+                details.useTarget group: details.requested.group, name: 'android-jsc-intl', version: 'r224109'
+            }
+        }
+    }
 }

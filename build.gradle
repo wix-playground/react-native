@@ -23,6 +23,10 @@ allprojects {
         jcenter()
         mavenLocal()
         google()
+        maven {
+            // Local Maven repo containing AARs with JSC library built for Android
+            url "$project.rootDir/node_modules/jsc-android/dist"
+        }
 
         def androidSdk = System.getenv("ANDROID_SDK")
         maven {

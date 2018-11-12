@@ -9,7 +9,7 @@ releaseVersion.raw = releaseVersion.version;
 
 echo(`Building ${releaseVersion}, make sure you are using the private artifactory credentials`);
 exec(`scripts/bump-oss-version.js ${releaseVersion}`);
-exec('./gradlew clean :ReactAndroid:installArchives');
+exec('./gradlew :ReactAndroid:installArchives');
 echo(`Publishing to npm ${releaseVersion}...`);
 exec('npm publish');
 echo(`Published to npm ${releaseVersion}`);

@@ -177,6 +177,18 @@ namespace facebook {
       return false;
 #endif
     }
+    
+    extern "C" {
+      extern void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[]);
+      JSValueRef __wix_cfunc_callback(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception);
+      
+      JSValueRef __wix_cfunc_callback(JSContextRef ctx, __unused JSObjectRef function, __unused JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], __unused JSValueRef* exception)
+      {
+        __wix_mark_event_js_callback(ctx, argumentCount, arguments);
+        
+        return JSC_JSValueMakeUndefined(ctx);
+      }
+    }
 
     void JSCExecutor::initOnJSVMThread() throw(JSException) {
       SystraceSection s("JSCExecutor::initOnJSVMThread");
@@ -225,6 +237,8 @@ namespace facebook {
       installNativeHook<&JSCExecutor::nativeFlushQueueImmediate>("nativeFlushQueueImmediate");
       installNativeHook<&JSCExecutor::nativeCallSyncHook>("nativeCallSyncHook");
 
+      installGlobalFunction(m_context, "__wix_events_func", __wix_cfunc_callback);
+      
       installGlobalFunction(m_context, "nativeLoggingHook", JSCNativeHooks::loggingHook);
       installGlobalFunction(m_context, "nativePerformanceNow", JSCNativeHooks::nowHook);
 

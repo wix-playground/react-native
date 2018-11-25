@@ -22,6 +22,8 @@
 #import "RCTReloadCommand.h"
 #import "RCTUtils.h"
 
+#import <dlfcn.h>
+
 NSString *const RCTJavaScriptWillStartLoadingNotification = @"RCTJavaScriptWillStartLoadingNotification";
 NSString *const RCTJavaScriptWillStartExecutingNotification = @"RCTJavaScriptWillStartExecutingNotification";
 NSString *const RCTJavaScriptDidLoadNotification = @"RCTJavaScriptDidLoadNotification";
@@ -32,6 +34,96 @@ NSString *const RCTBridgeWillDownloadScriptNotification = @"RCTBridgeWillDownloa
 NSString *const RCTBridgeDidDownloadScriptNotification = @"RCTBridgeDidDownloadScriptNotification";
 NSString *const RCTBridgeDidDownloadScriptNotificationSourceKey = @"source";
 NSString *const RCTBridgeDidDownloadScriptNotificationBridgeDescriptionKey = @"bridgeDescription";
+
+//extern DTXEventIdentifier DTXProfilerMarkEventIntervalBegin(NSString* category, NSString* name, NSString* __nullable additionalInfo);
+//extern void DTXProfilerMarkEventIntervalEnd(DTXEventIdentifier identifier, DTXEventStatus eventStatus, NSString* __nullable additionalInfo);
+//extern void DTXProfilerMarkEvent(NSString* category, NSString* name, DTXEventStatus eventStatus, NSString* __nullable additionalInfo);
+
+void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL);
+void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL)
+{
+  NSString* sourceURLString = CFBridgingRelease(JSStringCopyCFString(kCFAllocatorDefault, sourceURL));
+  
+  id (*DTXProfilerMarkEventIntervalBegin)(NSString* category, NSString* name, NSString* __nullable additionalInfo) = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEventIntervalBegin");
+  
+  if(DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return NULL;
+  }
+  
+  id rv = DTXProfilerMarkEventIntervalBegin(@"JavaScript", @"JSEvaluateScript", sourceURLString);
+  
+  return (void*)CFBridgingRetain(rv);
+}
+
+void __wix_end_JSEvaluateScript(void* ctx);
+void __wix_end_JSEvaluateScript(void* ctx)
+{
+  if(ctx == NULL)
+  {
+    return;
+  }
+  
+  id ctxObj = CFBridgingRelease(ctx);
+  
+  void (*DTXProfilerMarkEventIntervalEnd)(id identifier, NSUInteger eventStatus, NSString* __nullable additionalInfo) = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEventIntervalEnd");
+  
+  if(DTXProfilerMarkEventIntervalEnd == NULL)
+  {
+    return;
+  }
+  
+  DTXProfilerMarkEventIntervalEnd(ctxObj, 0, nil);
+}
+
+void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[]);
+void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[])
+{
+  void (*DTXProfilerMarkEvent)(NSString* category, NSString* name, NSUInteger eventStatus, NSString* __nullable additionalInfo) = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEvent");
+  
+  if(DTXProfilerMarkEvent == NULL)
+  {
+    return;
+  }
+  
+  if(argumentCount < 1)
+  {
+    return;
+  }
+  
+  NSMutableString* argumentsString = [NSMutableString new];
+  
+  JSStringRef eventNameJS = JSValueToStringCopy(ctx, arguments[0], NULL);
+  NSString* eventName = nil;
+  
+  if(eventNameJS)
+  {
+    eventName = CFBridgingRelease(JSStringCopyCFString(kCFAllocatorDefault, eventNameJS));
+    
+    JSStringRelease(eventNameJS);
+    eventNameJS = NULL;
+  }
+  
+  if(eventName == nil)
+  {
+    return;
+  }
+  
+  for(NSUInteger idx = 1; idx < argumentCount; idx++)
+  {
+    JSStringRef str = JSValueCreateJSONString(ctx, arguments[idx], 4, NULL);
+    
+    if(str)
+    {
+      [argumentsString appendFormat:@"%@\n", CFBridgingRelease(JSStringCopyCFString(kCFAllocatorDefault, str))];
+      
+      JSStringRelease(str);
+      str = NULL;
+    }
+  }
+  
+  DTXProfilerMarkEvent(@"JavaScript", eventName, 0, argumentsString);
+}
 
 static NSMutableArray<Class> *RCTModuleClasses;
 static dispatch_queue_t RCTModuleClassesSyncQueue;

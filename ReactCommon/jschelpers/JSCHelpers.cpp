@@ -207,17 +207,23 @@ void installGlobalProxy(
 void removeGlobal(JSGlobalContextRef ctx, const char* name) {
   Object::getGlobalObject(ctx).setProperty(name, Value::makeUndefined(ctx));
 }
-  
+
+#if defined(__APPLE__)
 extern "C" {
   extern void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL);
   extern void __wix_end_JSEvaluateScript(void* ctx);
 }
+#endif
 
 JSValueRef evaluateScript(JSContextRef context, JSStringRef script, JSStringRef sourceURL) {
   JSValueRef exn, result;
+#if defined(__APPLE__)
   void* ctx = __wix_begin_JSEvaluateScript(sourceURL);
+#endif
   result = JSC_JSEvaluateScript(context, script, NULL, sourceURL, 0, &exn);
+#if defined(__APPLE__)
   __wix_end_JSEvaluateScript(ctx);
+#endif
   if (result == nullptr) {
     throw JSException(context, exn, sourceURL);
   }

@@ -80,10 +80,8 @@ import com.facebook.react.modules.debug.interfaces.DeveloperSettings;
 import com.facebook.react.modules.fabric.ReactFabric;
 import com.facebook.react.packagerconnection.RequestHandler;
 import com.facebook.react.uimanager.DisplayMetricsHolder;
-import com.facebook.react.uimanager.UIImplementationProvider;
 import com.facebook.react.uimanager.UIManagerHelper;
 import com.facebook.react.uimanager.ViewManager;
-import com.facebook.react.uimanager.events.EventDispatcher;
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper;
 import com.facebook.soloader.SoLoader;
 import com.facebook.systrace.Systrace;
@@ -201,7 +199,6 @@ public class ReactInstanceManager {
     boolean useDeveloperSupport,
     @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
     LifecycleState initialLifecycleState,
-    UIImplementationProvider uiImplementationProvider,
     NativeModuleCallExceptionHandler nativeModuleCallExceptionHandler,
     @Nullable RedBoxHandler redBoxHandler,
     boolean lazyViewManagersEnabled,
@@ -249,7 +246,6 @@ public class ReactInstanceManager {
                   ReactInstanceManager.this.invokeDefaultOnBackPressed();
                 }
               },
-              uiImplementationProvider,
               lazyViewManagersEnabled,
               minTimeLeftInFrameForNonBatchedOperationMs));
       if (mUseDeveloperSupport) {

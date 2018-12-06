@@ -12,6 +12,6 @@
 #define RCT_REACT_NATIVE_VERSION @{ \
   @"major": @(0), \
   @"minor": @(51), \
-  @"patch": @(2400), \
+  @"patch": @(2500), \
   @"prerelease": [NSNull null], \
 }

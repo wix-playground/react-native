@@ -106,8 +106,13 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init);
 
 #pragma mark - private setup methods
 
+extern id __wix_begin_moduleLoad(NSString* className);
+extern void __wix_end_event(id eventId);
+
 - (void)setUpInstanceAndBridge
 {
+  id eventId = __wix_begin_moduleLoad(NSStringFromClass(_moduleClass));
+  
   RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpInstanceAndBridge]", @{
     @"moduleClass": NSStringFromClass(_moduleClass)
   });
@@ -164,6 +169,8 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init);
     // thread.
     _requiresMainQueueSetup = NO;
   }
+  
+  __wix_end_event(eventId);
 }
 
 - (void)setBridgeForInstance

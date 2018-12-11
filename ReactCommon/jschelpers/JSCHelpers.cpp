@@ -211,7 +211,7 @@ void removeGlobal(JSGlobalContextRef ctx, const char* name) {
 #if defined(__APPLE__)
 extern "C" {
   extern void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL);
-  extern void __wix_end_JSEvaluateScript(void* ctx);
+  extern void __wix_end_event_c(void* ctx);
 }
 #endif
 
@@ -222,7 +222,7 @@ JSValueRef evaluateScript(JSContextRef context, JSStringRef script, JSStringRef 
 #endif
   result = JSC_JSEvaluateScript(context, script, NULL, sourceURL, 0, &exn);
 #if defined(__APPLE__)
-  __wix_end_JSEvaluateScript(ctx);
+  __wix_end_event_c(ctx);
 #endif
   if (result == nullptr) {
     throw JSException(context, exn, sourceURL);

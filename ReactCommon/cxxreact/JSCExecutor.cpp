@@ -434,6 +434,15 @@ static std::string simpleBasename(const std::string& path) {
   size_t pos = path.rfind("/");
   return (pos != std::string::npos) ? path.substr(pos) : path;
 }
+  
+#if defined(__APPLE__)
+  extern "C" {
+    extern void* __wix_begin_loadAppString(const char* sourceURL);
+    extern void* __wix_begin_loadModule(const char* moduleName);
+    extern void* __wix_begin_adoptString(const unsigned long long int stringLength);
+    extern void __wix_end_event_c(void* ctx);
+  }
+#endif
 
 void JSCExecutor::loadApplicationScript(
     std::unique_ptr<const JSBigString> script,
@@ -441,6 +450,10 @@ void JSCExecutor::loadApplicationScript(
   SystraceSection s(
       "JSCExecutor::loadApplicationScript", "sourceURL", sourceURL);
 
+#if defined(__APPLE__)
+  void* ctx = __wix_begin_loadAppString(sourceURL.c_str());
+#endif
+  
   std::string scriptName = simpleBasename(sourceURL);
   ReactMarker::logTaggedMarker(
       ReactMarker::RUN_JS_BUNDLE_START, scriptName.c_str());
@@ -516,6 +529,10 @@ void JSCExecutor::loadApplicationScript(
   ReactMarker::logMarker(ReactMarker::CREATE_REACT_CONTEXT_STOP);
   ReactMarker::logTaggedMarker(
       ReactMarker::RUN_JS_BUNDLE_STOP, scriptName.c_str());
+  
+#if defined(__APPLE__)
+  __wix_end_event_c(ctx);
+#endif
 }
 
 void JSCExecutor::setBundleRegistry(
@@ -691,18 +708,27 @@ std::string JSCExecutor::getDescription() {
 }
 
 String JSCExecutor::adoptString(std::unique_ptr<const JSBigString> script) {
+#if defined(__APPLE__)
+  void* ctx = __wix_begin_adoptString(script->size());
+#endif
+  String rv;
 #if defined(WITH_FBJSCEXTENSIONS)
   const JSBigString* string = script.release();
   auto jsString = JSStringCreateAdoptingExternal(
       string->c_str(), string->size(), (void*)string, [](void* s) {
         delete static_cast<JSBigString*>(s);
       });
-  return String::adopt(m_context, jsString);
+  rv = String::adopt(m_context, jsString);
 #else
-  return script->isAscii()
+  rv = script->isAscii()
       ? String::createExpectingAscii(m_context, script->c_str(), script->size())
       : String(m_context, script->c_str());
 #endif
+#if defined(__APPLE__)
+  __wix_end_event_c(ctx);
+#endif
+  
+  return rv;
 }
 
 void* JSCExecutor::getJavaScriptContext() {
@@ -727,10 +753,19 @@ void JSCExecutor::flushQueueImmediate(Value&& queue) {
 
 void JSCExecutor::loadModule(uint32_t bundleId, uint32_t moduleId) {
   auto module = m_bundleRegistry->getModule(bundleId, moduleId);
+  
+#if defined(__APPLE__)
+  void* ctx = __wix_begin_loadModule(module.name.c_str());
+#endif
+  
   auto sourceUrl = String::createExpectingAscii(m_context, module.name);
   auto source = adoptString(
       std::unique_ptr<JSBigString>(new JSBigStdString(module.code)));
   evaluateScript(m_context, source, sourceUrl);
+  
+#if defined(__APPLE__)
+  __wix_end_event_c(ctx);
+#endif
 }
 
 // Native JS hooks

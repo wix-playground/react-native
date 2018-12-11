@@ -178,19 +178,19 @@ namespace facebook {
 #endif
     }
     
+extern "C" {
 #if defined(__APPLE__)
-    extern "C" {
-      extern void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[]);
-      JSValueRef __wix_cfunc_callback(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception);
-      
-      JSValueRef __wix_cfunc_callback(JSContextRef ctx, __unused JSObjectRef function, __unused JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], __unused JSValueRef* exception)
-      {
-        __wix_mark_event_js_callback(ctx, argumentCount, arguments);
-        
-        return JSC_JSValueMakeUndefined(ctx);
-      }
-    }
+  extern void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[]);
+
+  JSValueRef __wix_cfunc_callback(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception);
+  JSValueRef __wix_cfunc_callback(JSContextRef ctx, __unused JSObjectRef function, __unused JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], __unused JSValueRef* exception)
+  {
+    __wix_mark_event_js_callback(ctx, argumentCount, arguments);
+    
+    return JSC_JSValueMakeUndefined(ctx);
+  }
 #endif
+}
     
     void JSCExecutor::initOnJSVMThread() throw(JSException) {
       SystraceSection s("JSCExecutor::initOnJSVMThread");
@@ -240,7 +240,7 @@ namespace facebook {
       installNativeHook<&JSCExecutor::nativeCallSyncHook>("nativeCallSyncHook");
 
 #if defined(__APPLE__)
-      installGlobalFunction(m_context, "__wix_events_func", __wix_cfunc_callback);
+  installGlobalFunction(m_context, "__wix_events_func", __wix_cfunc_callback);
 #endif
       
       installGlobalFunction(m_context, "nativeLoggingHook", JSCNativeHooks::loggingHook);
@@ -392,9 +392,22 @@ namespace facebook {
       return (pos != std::string::npos) ? path.substr(pos) : path;
     }
 
+#if defined(__APPLE__)
+  extern "C" {
+    extern void* __wix_begin_loadAppString(const char* sourceURL);
+    extern void* __wix_begin_loadModule(const char* moduleName);
+    extern void* __wix_begin_adoptString(const unsigned long long int stringLength);
+    extern void __wix_end_event_c(void* ctx);
+  }
+#endif
+
     void JSCExecutor::loadApplicationScript(std::unique_ptr<const JSBigString> script, std::string sourceURL) {
       SystraceSection s("JSCExecutor::loadApplicationScript",
                         "sourceURL", sourceURL);
+
+#if defined(__APPLE__)
+  void* ctx = __wix_begin_loadAppString(sourceURL.c_str());
+#endif
 
       std::string scriptName = simpleBasename(sourceURL);
       ReactMarker::logTaggedMarker(ReactMarker::RUN_JS_BUNDLE_START, scriptName.c_str());
@@ -467,6 +480,10 @@ namespace facebook {
 
       ReactMarker::logMarker(ReactMarker::CREATE_REACT_CONTEXT_STOP);
       ReactMarker::logTaggedMarker(ReactMarker::RUN_JS_BUNDLE_STOP, scriptName.c_str());
+
+#if defined(__APPLE__)
+  __wix_end_event_c(ctx);
+#endif
     }
 
     void JSCExecutor::setBundleRegistry(std::unique_ptr<RAMBundleRegistry> bundleRegistry) {
@@ -638,17 +655,26 @@ namespace facebook {
     }
 
     String JSCExecutor::adoptString(std::unique_ptr<const JSBigString> script) {
+#if defined(__APPLE__)
+  void* ctx = __wix_begin_adoptString(script->size());
+#endif
+  String rv;
 #if defined(WITH_FBJSCEXTENSIONS)
       const JSBigString* string = script.release();
       auto jsString = JSStringCreateAdoptingExternal(string->c_str(), string->size(), (void*)string, [](void* s) {
         delete static_cast<JSBigString*>(s);
       });
-      return String::adopt(m_context, jsString);
+      rv = String::adopt(m_context, jsString);
 #else
-      return script->isAscii()
+      rv = script->isAscii()
       ? String::createExpectingAscii(m_context, script->c_str(), script->size())
       : String(m_context, script->c_str());
 #endif
+#if defined(__APPLE__)
+  __wix_end_event_c(ctx);
+#endif
+  
+  return rv;
     }
 
     void* JSCExecutor::getJavaScriptContext() {
@@ -668,9 +694,18 @@ namespace facebook {
 
     void JSCExecutor::loadModule(uint32_t bundleId, uint32_t moduleId) {
       auto module = m_bundleRegistry->getModule(bundleId, moduleId);
+
+#if defined(__APPLE__)
+  void* ctx = __wix_begin_loadModule(module.name.c_str());
+#endif
+
       auto sourceUrl = String::createExpectingAscii(m_context, module.name);
       auto source = adoptString(std::unique_ptr<JSBigString>(new JSBigStdString(module.code)));
       evaluateScript(m_context, source, sourceUrl);
+
+#if defined(__APPLE__)
+  __wix_end_event_c(ctx);
+#endif
     }
 
     // Native JS hooks

@@ -40,25 +40,101 @@ NSString *const RCTBridgeDidDownloadScriptNotificationSourceKey = @"source";
 //extern void DTXProfilerMarkEventIntervalEnd(DTXEventIdentifier identifier, DTXEventStatus eventStatus, NSString* __nullable additionalInfo);
 //extern void DTXProfilerMarkEvent(NSString* category, NSString* name, DTXEventStatus eventStatus, NSString* __nullable additionalInfo);
 
-void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL);
-void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL)
+static id (*__DTXProfilerMarkEventIntervalBegin)(NSString* category, NSString* name, NSString* __nullable additionalInfo);
+static void (*__DTXProfilerMarkEventIntervalEnd)(id identifier, NSUInteger eventStatus, NSString* __nullable additionalInfo);
+static void (*__DTXProfilerMarkEvent)(NSString* category, NSString* name, NSUInteger eventStatus, NSString* __nullable additionalInfo);
+
+__attribute((__constructor__))
+static void _setupSymbols(void)
 {
-  NSString* sourceURLString = CFBridgingRelease(JSStringCopyCFString(kCFAllocatorDefault, sourceURL));
+  __DTXProfilerMarkEventIntervalBegin = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEventIntervalBegin");
+  __DTXProfilerMarkEventIntervalEnd = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEventIntervalEnd");
+  __DTXProfilerMarkEvent = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEvent");
+}
+
+id __wix_begin_moduleLoad(NSString* className);
+id __wix_begin_moduleLoad(NSString* className)
+{
+  if(className == nil)
+  {
+    return nil;
+  }
   
-  id (*DTXProfilerMarkEventIntervalBegin)(NSString* category, NSString* name, NSString* __nullable additionalInfo) = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEventIntervalBegin");
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return nil;
+  }
   
-  if(DTXProfilerMarkEventIntervalBegin == NULL)
+  return __DTXProfilerMarkEventIntervalBegin(@"React Native", @"Module Load", className);
+}
+
+void __wix_end_event(id eventId);
+void __wix_end_event(id eventId)
+{
+  if(__DTXProfilerMarkEventIntervalEnd == NULL)
+  {
+    return;
+  }
+  
+  __DTXProfilerMarkEventIntervalEnd(eventId, 0, nil);
+}
+
+void* __wix_begin_loadAppString(const char* sourceURL);
+void* __wix_begin_loadAppString(const char* sourceURL)
+{
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
   {
     return NULL;
   }
   
-  id rv = DTXProfilerMarkEventIntervalBegin(@"JavaScript", @"JSEvaluateScript", sourceURLString);
+  id rv = __DTXProfilerMarkEventIntervalBegin(@"React Native", @"loadApplicationString", [NSString stringWithFormat:@"%s", sourceURL]);
   
   return (void*)CFBridgingRetain(rv);
 }
 
-void __wix_end_JSEvaluateScript(void* ctx);
-void __wix_end_JSEvaluateScript(void* ctx)
+void* __wix_begin_loadModule(const char* moduleName);
+void* __wix_begin_loadModule(const char* moduleName)
+{
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return NULL;
+  }
+  
+  id rv = __DTXProfilerMarkEventIntervalBegin(@"React Native", @"loadModule", [NSString stringWithFormat:@"%s", moduleName]);
+  
+  return (void*)CFBridgingRetain(rv);
+}
+
+void* __wix_begin_adoptString(const unsigned long long int stringLength);
+void* __wix_begin_adoptString(const unsigned long long int stringLength)
+{
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return NULL;
+  }
+  
+  id rv = __DTXProfilerMarkEventIntervalBegin(@"React Native", @"adoptString", [NSString stringWithFormat:@"String length: %llu", stringLength]);
+  
+  return (void*)CFBridgingRetain(rv);
+}
+
+void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL);
+void* __wix_begin_JSEvaluateScript(JSStringRef sourceURL)
+{
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return NULL;
+  }
+  
+  NSString* sourceURLString = CFBridgingRelease(JSStringCopyCFString(kCFAllocatorDefault, sourceURL));
+  
+  id rv = __DTXProfilerMarkEventIntervalBegin(@"React Native", @"JSEvaluateScript", sourceURLString);
+  
+  return (void*)CFBridgingRetain(rv);
+}
+
+void __wix_end_event_c(void* ctx);
+void __wix_end_event_c(void* ctx)
 {
   if(ctx == NULL)
   {
@@ -67,22 +143,13 @@ void __wix_end_JSEvaluateScript(void* ctx)
   
   id ctxObj = CFBridgingRelease(ctx);
   
-  void (*DTXProfilerMarkEventIntervalEnd)(id identifier, NSUInteger eventStatus, NSString* __nullable additionalInfo) = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEventIntervalEnd");
-  
-  if(DTXProfilerMarkEventIntervalEnd == NULL)
-  {
-    return;
-  }
-  
-  DTXProfilerMarkEventIntervalEnd(ctxObj, 0, nil);
+  __wix_end_event(ctxObj);
 }
 
 void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[]);
 void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const JSValueRef arguments[])
 {
-  void (*DTXProfilerMarkEvent)(NSString* category, NSString* name, NSUInteger eventStatus, NSString* __nullable additionalInfo) = dlsym(RTLD_DEFAULT, "DTXProfilerMarkEvent");
-  
-  if(DTXProfilerMarkEvent == NULL)
+  if(__DTXProfilerMarkEvent == NULL)
   {
     return;
   }
@@ -123,7 +190,7 @@ void __wix_mark_event_js_callback(JSContextRef ctx, size_t argumentCount, const 
     }
   }
   
-  DTXProfilerMarkEvent(@"JavaScript", eventName, 0, argumentsString);
+  __DTXProfilerMarkEvent(@"React Native", eventName, 0, argumentsString);
 }
 
 static NSMutableArray<Class> *RCTModuleClasses;

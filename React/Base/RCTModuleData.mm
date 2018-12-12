@@ -108,8 +108,10 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init);
 
 #pragma mark - private setup methods
 
-extern id __wix_begin_moduleLoad(NSString* className);
-extern void __wix_end_event(id eventId);
+extern "C" {
+  extern id __wix_begin_moduleLoad(NSString* className);
+  extern void __wix_end_event(id eventId);
+}
 
 - (void)setUpInstanceAndBridge
 {

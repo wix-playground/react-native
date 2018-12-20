@@ -115,8 +115,6 @@ extern "C" {
 
 - (void)setUpInstanceAndBridge
 {
-  id eventId = __wix_begin_moduleLoad(NSStringFromClass(_moduleClass));
-  
   RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpInstanceAndBridge]", @{
     @"moduleClass": NSStringFromClass(_moduleClass)
   });
@@ -128,7 +126,9 @@ extern "C" {
         if (RCT_DEBUG && _requiresMainQueueSetup) {
           RCTAssertMainQueue();
         }
-        RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpInstanceAndBridge] Create module", nil);
+        RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpInstanceAndBridge] Create module", @{
+                                                                                                                @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                                                                });
         _instance = _moduleProvider ? _moduleProvider() : nil;
         RCT_PROFILE_END_EVENT(RCTProfileTagAlways, @"");
         if (!_instance) {
@@ -173,14 +173,14 @@ extern "C" {
     // thread.
     _requiresMainQueueSetup = NO;
   }
-  
-  __wix_end_event(eventId);
 }
 
 - (void)setBridgeForInstance
 {
   if ([_instance respondsToSelector:@selector(bridge)] && _instance.bridge != _bridge) {
-    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setBridgeForInstance]", nil);
+    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setBridgeForInstance]", @{
+                                                                                            @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                                            });
     @try {
       [(id)_instance setValue:_bridge forKey:@"bridge"];
     }
@@ -196,7 +196,9 @@ extern "C" {
 - (void)finishSetupForInstance
 {
   if (!_setupComplete && _instance) {
-    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData finishSetupForInstance]", nil);
+    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData finishSetupForInstance]", @{
+                                                                                              @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                                              });
     _setupComplete = YES;
     [_bridge registerModuleForFrameUpdates:_instance withModuleData:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:RCTDidInitializeModuleNotification
@@ -209,7 +211,9 @@ extern "C" {
 - (void)setUpMethodQueue
 {
   if (_instance && !_methodQueue && _bridge.valid) {
-    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpMethodQueue]", nil);
+    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData setUpMethodQueue]", @{
+                                                                                        @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                                        });
     BOOL implementsMethodQueue = [_instance respondsToSelector:@selector(methodQueue)];
     if (implementsMethodQueue && _bridge.valid) {
       _methodQueue = _instance.methodQueue;
@@ -247,13 +251,17 @@ extern "C" {
 - (id<RCTBridgeModule>)instance
 {
   if (!_setupComplete) {
-    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, ([NSString stringWithFormat:@"[RCTModuleData instanceForClass:%@]", _moduleClass]), nil);
+    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData instance]", @{
+                                                                               @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                               });
     if (_requiresMainQueueSetup) {
       // The chances of deadlock here are low, because module init very rarely
       // calls out to other threads, however we can't control when a module might
       // get accessed by client code during bridge setup, and a very low risk of
       // deadlock is better than a fairly high risk of an assertion being thrown.
-      RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData instance] main thread setup", nil);
+      RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData instance] main thread setup", @{
+                                                                                                    @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                                                    });
 
       if (!RCTIsMainQueue()) {
         RCTLogWarn(@"RCTBridge required dispatch_sync to load %@. This may lead to deadlocks", _moduleClass);
@@ -314,7 +322,9 @@ extern "C" {
 - (void)gatherConstants
 {
   if (_hasConstantsToExport && !_constantsToExport) {
-    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, ([NSString stringWithFormat:@"[RCTModuleData gatherConstants] %@", _moduleClass]), nil);
+    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData gatherConstants]", @{
+                                                                                       @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                                       });
     (void)[self instance];
     if (_requiresMainQueueSetup) {
       if (!RCTIsMainQueue()) {
@@ -347,7 +357,9 @@ extern "C" {
     return (id)kCFNull; // Nothing to export
   }
 
-  RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, ([NSString stringWithFormat:@"[RCTModuleData config] %@", _moduleClass]), nil);
+  RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"[RCTModuleData config]",@{
+                                                                          @"moduleClass": NSStringFromClass(_moduleClass)
+                                                                          });
   NSMutableArray<NSString *> *methods = self.methods.count ? [NSMutableArray new] : nil;
   NSMutableArray<NSNumber *> *promiseMethods = nil;
   NSMutableArray<NSNumber *> *syncMethods = nil;

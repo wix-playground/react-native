@@ -114,7 +114,7 @@
   for (RCTModuleData *moduleData in _frameUpdateObservers) {
     id<RCTFrameUpdateObserver> observer = (id<RCTFrameUpdateObserver>)moduleData.instance;
     if (!observer.paused) {
-      RCTProfileBeginFlowEvent();
+      RCTProfileBeginFlowEvent(@"Flow.notifyFrameUpdateObserver", @"");
 
       [self dispatchBlock:^{
         RCTProfileEndFlowEvent();

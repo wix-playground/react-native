@@ -43,7 +43,7 @@ static NSString *const kProfilePrefix = @"rct_profile_";
 
 #pragma mark - Variables
 
-static atomic_bool RCTProfileProfiling = ATOMIC_VAR_INIT(NO);
+static atomic_bool RCTProfileProfiling = ATOMIC_VAR_INIT(YES);
 
 static NSDictionary *RCTProfileInfo;
 static NSMutableDictionary *RCTProfileOngoingEvents;
@@ -68,7 +68,208 @@ if (!RCTProfileIsProfiling()) { \
 
 #pragma mark - systrace glue code
 
-static RCTProfileCallbacks *callbacks;
+
+extern void* __wix_begin_event_c(const char* eventName, const char* additionnalInfo);
+extern void* __wix_begin_jsprofiling_event_c(const char* eventName, const char* additionnalInfo);
+extern void __wix_end_event_c(void* eventId);
+extern void __wix_mark_event_c(const char* eventName, const char* additionnalInfo);
+
+char * wixProfileStart(void);
+void wixProfileStop(void);
+void wixProfileBeginSection(uint64_t tag, const char *name, size_t numArgs, systrace_arg_t *args);
+void wixProfileEndSection(uint64_t tag, size_t numArgs, systrace_arg_t *args);
+void wixProfileBeginAsyncSection(uint64_t tag, const char *name, int cookie, size_t numArgs, systrace_arg_t *args);
+void wixProfileEndAsyncSection(uint64_t tag, const char *name, int cookie, size_t numArgs, systrace_arg_t *args);
+void wixProfileInstantSection(uint64_t tag, const char *name, char scope);
+void wixProfileBeginAsyncFlow(uint64_t tag, const char *name, int cookie, const char* argument);
+void wixProfileEndAsyncFlow(uint64_t tag, const char *name, int cookie);
+
+void wixJSProfileBeginSection(uint64_t tag, const char *name, size_t numArgs, systrace_arg_t *args);
+void wixJSProfileBeginAsyncSection(uint64_t tag, const char *name, int cookie, size_t numArgs, systrace_arg_t *args);
+void wixJSProfileEndAsyncSection(uint64_t tag, const char *name, int cookie, size_t numArgs, systrace_arg_t *args);
+
+
+char * wixProfileStart(void) {return 0;}
+void wixProfileStop(void){}
+
+
+static NSMutableDictionary* threadSections = nil;
+static NSMutableDictionary* asyncSections = nil;
+static NSMutableDictionary* asyncJSProfileSections = nil;
+static NSMutableDictionary* asyncFlows = nil;
+
+@implementation NSThread (GetSequenceNumber)
+
+- (NSInteger)sequenceNumber
+{
+  return [[self valueForKeyPath:@"private.seqNum"] integerValue];
+}
+
+@end
+
+NSString* getOptionalArgument(size_t numArgs, systrace_arg_t *args);
+NSString* getOptionalArgument(size_t numArgs, systrace_arg_t *args) {
+  if (numArgs == 0) {
+    return @"";
+  }
+  NSMutableString* output = [[NSMutableString alloc] init];
+  if (numArgs == 1) {
+    [output appendFormat:@"%@", [NSString stringWithUTF8String:args[0].value]];
+  } else {
+    [output appendString:@"{ "];
+    for (size_t i = 0; i < numArgs; i++) {
+      [output appendFormat:@"%@: %@", [NSString stringWithUTF8String:args[i].key], [NSString stringWithUTF8String:args[i].value]];
+      if (i < numArgs - 1) {
+        [output appendString:@", "];
+      }
+    }
+    [output appendString:@" }"];
+  }
+  return output;
+}
+
+static dispatch_once_t onceSectionsToken;
+
+void wixProfileBeginSection(__unused uint64_t tag, const char *name, size_t numArgs, systrace_arg_t *args) {
+  dispatch_once(&onceSectionsToken, ^{
+    threadSections = [[NSMutableDictionary alloc] init];
+  });
+
+  void* eventId = __wix_begin_event_c(name, [getOptionalArgument(numArgs, args) UTF8String]);
+  @synchronized(threadSections) {
+    NSInteger threadId = [[NSThread currentThread] sequenceNumber];
+    NSMutableArray* sections = [threadSections objectForKey:@(threadId)];
+    if (sections == nil) {
+      sections = [[NSMutableArray alloc] init];
+      [sections addObject:(__bridge id _Nonnull) eventId];
+      [threadSections setObject:sections forKey:@(threadId)];
+    } else {
+      [sections addObject:(__bridge id _Nonnull) eventId];
+    }
+  }
+}
+
+void wixProfileEndSection(__unused uint64_t tag, __unused size_t numArgs, __unused systrace_arg_t *args) {
+  @synchronized(threadSections) {
+    NSInteger threadId = [[NSThread currentThread] sequenceNumber];
+    NSMutableArray* sections = [threadSections objectForKey:@(threadId)];
+    if (sections != nil) {
+      void* eventId = (__bridge void*)[sections lastObject];
+      if (eventId) {
+        __wix_end_event_c(eventId);
+        [sections removeLastObject];
+      }
+    }
+  }
+}
+
+void wixJSProfileBeginSection(__unused uint64_t tag, const char *name, size_t numArgs, systrace_arg_t *args) {
+  dispatch_once(&onceSectionsToken, ^{
+    threadSections = [[NSMutableDictionary alloc] init];
+  });
+  
+  void* eventId = __wix_begin_jsprofiling_event_c(name, [getOptionalArgument(numArgs, args) UTF8String]);
+  @synchronized(threadSections) {
+    NSInteger threadId = [[NSThread currentThread] sequenceNumber];
+    NSMutableArray* sections = [threadSections objectForKey:@(threadId)];
+    if (sections == nil) {
+      sections = [[NSMutableArray alloc] init];
+      [sections addObject:(__bridge id _Nonnull) eventId];
+      [threadSections setObject:sections forKey:@(threadId)];
+    } else {
+      [sections addObject:(__bridge id _Nonnull) eventId];
+    }
+  }
+}
+
+// for async events, cookie is the key
+void wixProfileBeginAsyncSection(__unused uint64_t tag, const char *name, int cookie, size_t numArgs, systrace_arg_t *args) {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    asyncSections = [[NSMutableDictionary alloc] init];
+  });
+  void* eventId = __wix_begin_event_c(name, [getOptionalArgument(numArgs, args) UTF8String]);
+  NSNumber* key = @(cookie);
+  @synchronized(asyncSections) {
+    [asyncSections setObject:(__bridge id _Nonnull) eventId forKey:key];
+  }
+}
+
+void wixProfileEndAsyncSection(__unused uint64_t tag, __unused const char *name, int cookie, __unused size_t numArgs, __unused systrace_arg_t *args) {
+  NSNumber* key = @(cookie);
+  @synchronized(asyncSections) {
+    void* eventId = (__bridge void*)[asyncSections objectForKey:key];
+    if (eventId) {
+      __wix_end_event_c(eventId);
+      [asyncSections removeObjectForKey:key];
+    }
+  }
+}
+
+void wixJSProfileBeginAsyncSection(__unused uint64_t tag, const char *name, int cookie, size_t numArgs, systrace_arg_t *args) {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    asyncJSProfileSections = [[NSMutableDictionary alloc] init];
+  });
+  void* eventId = __wix_begin_jsprofiling_event_c(name, [getOptionalArgument(numArgs, args) UTF8String]);
+  NSNumber* key = @(cookie);
+  @synchronized(asyncJSProfileSections) {
+    [asyncJSProfileSections setObject:(__bridge id _Nonnull) eventId forKey:key];
+  }
+}
+
+void wixJSProfileEndAsyncSection(__unused uint64_t tag, __unused const char *name, int cookie, __unused size_t numArgs, __unused systrace_arg_t *args) {
+  NSNumber* key = @(cookie);
+  @synchronized(asyncJSProfileSections) {
+    void* eventId = (__bridge void*)[asyncJSProfileSections objectForKey:key];
+    if (eventId) {
+      __wix_end_event_c(eventId);
+      [asyncJSProfileSections removeObjectForKey:key];
+    }
+  }
+}
+
+// we don't need those events (JS Ticks)
+void wixProfileInstantSection(__unused uint64_t tag, const char *name, __unused char scope) {
+}
+
+// for flow events, cookie is the key
+void wixProfileBeginAsyncFlow(__unused uint64_t tag, const char *name, int cookie, const char* argument) {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    asyncFlows = [[NSMutableDictionary alloc] init];
+  });
+  void* eventId = __wix_begin_event_c(name, argument);
+  NSNumber* key = @(cookie);
+  @synchronized(asyncFlows) {
+    [asyncFlows setObject:(__bridge id _Nonnull) eventId forKey:key];
+  }
+}
+
+void wixProfileEndAsyncFlow(__unused uint64_t tag, __unused const char *name, int cookie) {
+  NSNumber* key = @(cookie);
+  @synchronized(asyncFlows) {
+    void* eventId = (__bridge void*)[asyncFlows objectForKey:key];
+    if (eventId) {
+      __wix_end_event_c(eventId);
+      [asyncFlows removeObjectForKey:key];
+    }
+  }
+}
+
+RCTProfileCallbacks wixProfileCallbacks = {
+  wixProfileStart,
+  wixProfileStop,
+  wixProfileBeginSection,
+  wixProfileEndSection,
+  wixProfileBeginAsyncSection,
+  wixProfileEndAsyncSection,
+  wixProfileInstantSection,
+  wixProfileBeginAsyncFlow,
+  wixProfileEndAsyncFlow
+};
+
+static RCTProfileCallbacks *callbacks = &wixProfileCallbacks;
 static char *systrace_buffer;
 
 static systrace_arg_t *newSystraceArgsFromDictionary(NSDictionary<NSString *, NSString *> *args)
@@ -81,9 +282,9 @@ static systrace_arg_t *newSystraceArgsFromDictionary(NSDictionary<NSString *, NS
   __block size_t i = 0;
   [args enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *value, __unused BOOL *stop) {
     systrace_args[i].key = [key UTF8String];
-    systrace_args[i].key_len = [key length];
+    systrace_args[i].key_len = (int)[key length];
     systrace_args[i].value = [value UTF8String];
-    systrace_args[i].value_len = [value length];
+    systrace_args[i].value_len = (int)[value length];
     i++;
   }];
   return systrace_args;
@@ -200,7 +401,7 @@ void RCTProfileTrampolineStart(id self, SEL cmd)
    * block.
    */
   Class klass = [self class];
-  RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, ([NSString stringWithFormat:@"-[%s %s]", class_getName(klass), sel_getName(cmd)]), nil);
+  RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, ([NSString stringWithFormat:@"NativeMethodCall.%s", class_getName(klass)]), (@{@"method": [NSString stringWithUTF8String:sel_getName(cmd)]}));
 }
 
 RCT_EXTERN void RCTProfileTrampolineEnd(void);
@@ -610,7 +811,7 @@ NSUInteger RCTProfileBeginAsyncEvent(
 
   if (callbacks != NULL) {
     systrace_arg_t *systraceArgs = newSystraceArgsFromDictionary(args);
-    callbacks->begin_async_section(tag, name.UTF8String, (int)(currentEventID % INT_MAX), args.count, systraceArgs);
+    callbacks->begin_async_section(tag, [NSString stringWithFormat:@"async.%@", name].UTF8String, (int)(currentEventID % INT_MAX), args.count, systraceArgs);
     free(systraceArgs);
   } else {
     dispatch_async(RCTProfileGetQueue(), ^{
@@ -688,7 +889,7 @@ void RCTProfileImmediateEvent(
   });
 }
 
-NSUInteger _RCTProfileBeginFlowEvent(void)
+NSUInteger _RCTProfileBeginFlowEvent(NSString* name, NSString* argument)
 {
   static NSUInteger flowID = 0;
 
@@ -696,7 +897,7 @@ NSUInteger _RCTProfileBeginFlowEvent(void)
 
   NSUInteger cookie = ++flowID;
   if (callbacks != NULL) {
-    callbacks->begin_async_flow(1, "flow", (int)cookie);
+    callbacks->begin_async_flow(1, [name UTF8String], (int)cookie, [argument UTF8String]);
     return cookie;
   }
 

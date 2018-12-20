@@ -1048,9 +1048,10 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithBundleURL:(__unused NSURL *)bundleUR
   /**
    * AnyThread
    */
-  RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"-[RCTCxxBridge enqueueJSCall:]", nil);
+  RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"-[RCTCxxBridge enqueueJSCall:]", (@{@"module": module, @"method": method}));
 
-  RCTProfileBeginFlowEvent();
+  NSString* fullMethodName = [NSString stringWithFormat:@"%@.%@", module, method];
+  RCTProfileBeginFlowEvent(@"Flow.postCallJSAfterLoad", fullMethodName);
   [self _runAfterLoad:^{
     RCTProfileEndFlowEvent();
 
@@ -1086,7 +1087,8 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithBundleURL:(__unused NSURL *)bundleUR
    * AnyThread
    */
 
-  RCTProfileBeginFlowEvent();
+  NSString* eventName = [NSString stringWithFormat:@"Flow.postCallJSCallbackAfterLoad"];
+  RCTProfileBeginFlowEvent(eventName, @"");
   [self _runAfterLoad:^{
     RCTProfileEndFlowEvent();
 

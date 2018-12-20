@@ -436,7 +436,7 @@ RCT_EXTERN_C_END
 - (SEL)selector
 {
   if (_selector == NULL) {
-    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"", (@{ @"module": NSStringFromClass(_moduleClass),
+    RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"RCTModuleMethod call", (@{ @"module": NSStringFromClass(_moduleClass),
                                                           @"method": @(_methodInfo->objcName) }));
     [self processMethodSignature];
     RCT_PROFILE_END_EVENT(RCTProfileTagAlways, @"");

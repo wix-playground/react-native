@@ -75,7 +75,7 @@ public:
   void loadApplicationScript(
       std::unique_ptr<const JSBigString> script,
       std::string sourceURL) override {
-    RCTProfileBeginFlowEvent();
+    RCTProfileBeginFlowEvent(@"Flow.loadApplicationScript", @"");
     [m_jse executeApplicationScript:[NSData dataWithBytes:script->c_str() length:script->size()]
            sourceURL:[[NSURL alloc]
                          initWithString:@(sourceURL.c_str())]

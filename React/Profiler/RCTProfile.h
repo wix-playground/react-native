@@ -30,10 +30,10 @@ RCT_EXTERN const uint64_t RCTProfileTagAlways;
 
 @class RCTBridge;
 
-#define RCTProfileBeginFlowEvent() \
+#define RCTProfileBeginFlowEvent(name, argument) \
 _Pragma("clang diagnostic push") \
 _Pragma("clang diagnostic ignored \"-Wshadow\"") \
-NSUInteger __rct_profile_flow_id = _RCTProfileBeginFlowEvent(); \
+NSUInteger __rct_profile_flow_id = _RCTProfileBeginFlowEvent(name, argument); \
 _Pragma("clang diagnostic pop")
 
 #define RCTProfileEndFlowEvent() \
@@ -41,7 +41,7 @@ _RCTProfileEndFlowEvent(__rct_profile_flow_id)
 
 RCT_EXTERN dispatch_queue_t RCTProfileGetQueue(void);
 
-RCT_EXTERN NSUInteger _RCTProfileBeginFlowEvent(void);
+RCT_EXTERN NSUInteger _RCTProfileBeginFlowEvent(NSString* name, NSString* argument);
 RCT_EXTERN void _RCTProfileEndFlowEvent(NSUInteger);
 
 /**
@@ -186,7 +186,7 @@ typedef struct {
 
   void (*instant_section)(uint64_t tag, const char *name, char scope);
 
-  void (*begin_async_flow)(uint64_t tag, const char *name, int cookie);
+  void (*begin_async_flow)(uint64_t tag, const char *name, int cookie, const char* argument);
   void (*end_async_flow)(uint64_t tag, const char *name, int cookie);
 } RCTProfileCallbacks;
 

@@ -187,7 +187,7 @@ const Systrace = {
     if (_enabled) {
       profileName = typeof profileName === 'function' ?
         profileName() : profileName;
-      global.nativeTraceBeginSection(TRACE_TAG_REACT_APPS, profileName, args);
+      global.nativeTraceBeginSection(TRACE_TAG_REACT_APPS, profileName, args || {});
     }
   },
 

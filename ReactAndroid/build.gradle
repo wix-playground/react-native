@@ -29,9 +29,9 @@ def dependenciesPath = System.getenv("REACT_NATIVE_DEPENDENCIES")
 // and the build will use that.
 def boostPath = dependenciesPath ?: System.getenv("REACT_NATIVE_BOOST_PATH")
 
-def JSC_VERSION = "224109.1.0"
+def JSC_VERSION = "236355.1.1"
 def JSC_REVISION = "r" + (JSC_VERSION.split('\\.')[0])
-def WEBKIT_VERSION = "2.18.2"
+def WEBKIT_VERSION = "2.22.2"
 println "\n\n\tUsing JavaScriptCore version ${JSC_VERSION} revision ${JSC_REVISION} from WebkitGTK ${WEBKIT_VERSION}\n\n"
 
 task createNativeDepsDirectories {

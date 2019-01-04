@@ -666,9 +666,9 @@ extern "C" {
       });
       rv = String::adopt(m_context, jsString);
 #else
-      rv = script->isAscii()
-      ? String::createExpectingAscii(m_context, script->c_str(), script->size())
-      : (isUTF16 ? String(m_context, script->c_str(), script->size()) : String(m_context, script->c_str()));
+      rv = isUTF16 ? String(m_context, script->c_str(), script->size())
+      : (script->isAscii() ? String::createExpectingAscii(m_context, script->c_str(), script->size())
+      : String(m_context, script->c_str()));
 #endif
 #if defined(__APPLE__)
   __wix_end_event_c(ctx);

@@ -94,7 +94,7 @@ gradle.projectsEvaluated {
                     commandLine("cmd", "/c", *nodeExecutableAndArgs, cliPath, bundleCommand, "--platform", "android", "--dev", "${devEnabled}",
                             "--reset-cache", "--entry-file", entryFile, "--bundle-output", jsBundleFile, "--assets-dest", resourcesDir, *extraArgs)
                 } else {
-                    commandLine(*nodeExecutableAndArgs, cliPath, bundleCommand, "--platform", "android", "--dev", "${devEnabled}",
+                    commandLine(*nodeExecutableAndArgs, cliPath, bundleCommand, "--bundle-encoding", "utf16le", "--platform", "android", "--dev", "${devEnabled}",
                             "--reset-cache", "--entry-file", entryFile, "--bundle-output", jsBundleFile, "--assets-dest", resourcesDir, *extraArgs)
                 }
 

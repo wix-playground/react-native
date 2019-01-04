@@ -31,6 +31,9 @@ public:
   explicit String(JSContextRef context, const char* utf8)
   : m_context(context), m_string(JSC_JSStringCreateWithUTF8CString(context, utf8)) {}
 
+  explicit String(JSContextRef context, const char* utf16, size_t len)
+    : m_context(context), m_string(JSC_JSStringCreateWithCharacters(context, (const unsigned short*)utf16, len >> 1)) {}
+
   String(String&& other) :
     m_context(other.m_context), m_string(other.m_string)
   {

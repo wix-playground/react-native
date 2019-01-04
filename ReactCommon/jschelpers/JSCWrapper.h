@@ -76,6 +76,7 @@ struct JSCWrapper {
   JSC_WRAPPER_METHOD(JSEvaluateBytecodeBundle);
 
   // JSString
+  JSC_WRAPPER_METHOD(JSStringCreateWithCharacters);
   JSC_WRAPPER_METHOD(JSStringCreateWithUTF8CString);
   JSC_WRAPPER_METHOD(JSStringCreateWithCFString);
   #if WITH_FBJSCEXTENSIONS

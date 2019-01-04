@@ -111,6 +111,8 @@ if [[ "$CONFIGURATION" = "Debug" && ! "$PLATFORM_NAME" == *simulator ]]; then
   echo "$IP" > "$DEST/ip.txt"
 fi
 
+clang++ -std=c++11 -stdlib=libc++ -arch x86_64 -mmacosx-version-min=10.13 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk $REACT_NATIVE_DIR/scripts/UTF8to16.cpp -o "$TMPDIR"utf8ToUtf16
+
 BUNDLE_FILE="$DEST/main.jsbundle"
 
 $NODE_BINARY $CLI_PATH $BUNDLE_COMMAND \
@@ -121,6 +123,11 @@ $NODE_BINARY $CLI_PATH $BUNDLE_COMMAND \
   --reset-cache \
   --bundle-output "$BUNDLE_FILE" \
   --assets-dest "$DEST"
+
+ls -alF "$BUNDLE_FILE"
+#cp "$BUNDLE_FILE" "$BUNDLE_FILE".utf8
+"$TMPDIR"utf8ToUtf16 "$BUNDLE_FILE"
+ls -alF "$BUNDLE_FILE"
 
 if [[ $DEV != true && ! -f "$BUNDLE_FILE" ]]; then
   echo "error: File $BUNDLE_FILE does not exist. This must be a bug with" >&2

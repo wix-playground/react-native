@@ -465,7 +465,7 @@ extern "C" {
         {
           SystraceSection s_("JSCExecutor::loadApplicationScript-createExpectingAscii");
           ReactMarker::logMarker(ReactMarker::JS_BUNDLE_STRING_CONVERT_START);
-          jsScript = adoptString(std::move(script));
+          jsScript = adoptString(std::move(script), true);
           ReactMarker::logMarker(ReactMarker::JS_BUNDLE_STRING_CONVERT_STOP);
         }
 #ifdef WITH_FBSYSTRACE
@@ -654,7 +654,7 @@ extern "C" {
 #endif
     }
 
-    String JSCExecutor::adoptString(std::unique_ptr<const JSBigString> script) {
+    String JSCExecutor::adoptString(std::unique_ptr<const JSBigString> script, bool isUTF16) {
 #if defined(__APPLE__)
   void* ctx = __wix_begin_adoptString(script->size());
 #endif
@@ -668,7 +668,7 @@ extern "C" {
 #else
       rv = script->isAscii()
       ? String::createExpectingAscii(m_context, script->c_str(), script->size())
-      : String(m_context, script->c_str());
+      : (isUTF16 ? String(m_context, script->c_str(), script->size()) : String(m_context, script->c_str()));
 #endif
 #if defined(__APPLE__)
   __wix_end_event_c(ctx);
@@ -700,7 +700,7 @@ extern "C" {
 #endif
 
       auto sourceUrl = String::createExpectingAscii(m_context, module.name);
-      auto source = adoptString(std::unique_ptr<JSBigString>(new JSBigStdString(module.code)));
+      auto source = adoptString(std::unique_ptr<JSBigString>(new JSBigStdString(module.code)), true);
       evaluateScript(m_context, source, sourceUrl);
 
 #if defined(__APPLE__)

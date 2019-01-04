@@ -67,6 +67,7 @@ const JSCWrapper* systemJSCWrapper() {
         (decltype(&JSEvaluateBytecodeBundle))
         Unimplemented_JSEvaluateBytecodeBundle,
 
+      .JSStringCreateWithCharacters = JSStringCreateWithCharacters,
       .JSStringCreateWithUTF8CString = JSStringCreateWithUTF8CString,
       .JSStringCreateWithCFString = JSStringCreateWithCFString,
       #if WITH_FBJSCEXTENSIONS

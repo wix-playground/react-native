@@ -127,7 +127,7 @@ private:
   void flushQueueImmediate(Value&&);
   void loadModule(uint32_t bundleId, uint32_t moduleId);
 
-  String adoptString(std::unique_ptr<const JSBigString>);
+  String adoptString(std::unique_ptr<const JSBigString>, bool isUTF16 = false);
 
   template<JSValueRef (JSCExecutor::*method)(size_t, const JSValueRef[])>
   void installNativeHook(const char* name);

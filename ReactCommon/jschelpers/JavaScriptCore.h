@@ -88,6 +88,7 @@ jsc_poison(JSContextGetGlobalContext JSContextGetGlobalObject JSContextGetGroup 
 jsc_poison(JSCheckScriptSyntax JSEvaluateScript JSEvaluateBytecodeBundle JSGarbageCollect)
 
 // JSString
+#define JSC_JSStringCreateWithCharacters(...) __jsc_drop_ctx_wrapper(JSStringCreateWithCharacters, __VA_ARGS__)
 #define JSC_JSStringCreateWithCFString(...) __jsc_drop_ctx_wrapper(JSStringCreateWithCFString, __VA_ARGS__)
 #define JSC_JSStringCreateWithUTF8CString(...) __jsc_drop_ctx_wrapper(JSStringCreateWithUTF8CString, __VA_ARGS__)
 #define JSC_JSStringCreateWithUTF8CStringExpectAscii(...) __jsc_drop_ctx_wrapper(JSStringCreateWithUTF8CStringExpectAscii, __VA_ARGS__)

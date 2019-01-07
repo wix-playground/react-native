@@ -109,8 +109,18 @@ if (+numberOfChangedLinesWithNewVersion !== 2) {
 }
 
 // - make commit [0.21.0-rc] Bump version numbers
-if (exec(`git commit -a -m "[${version}] Bump version numbers"`).code) {
-  echo('failed to commit');
+if (exec(`git add -u`).code) {
+  echo('failed to git-stage changes');
+  exit(1);
+}
+
+if (exec(`git reset scripts/`).code) {
+  echo('failed to git-unstage scripts, following a stage command');
+  exit(1);
+}
+
+if (exec(`git commit -m "[${version}] Bump version numbers"`).code) {
+  echo('failed to commit to git');
   exit(1);
 }
 

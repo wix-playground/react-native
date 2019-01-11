@@ -10,6 +10,7 @@
 
 'use strict';
 
+const __DEV__ = global.__DEV__ || global.__FORCE_SYSTRACE__;
 const invariant = require('fbjs/lib/invariant');
 
 const TRACE_TAG_REACT_APPS = 1 << 17; // eslint-disable-line no-bitwise

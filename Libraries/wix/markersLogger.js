@@ -34,36 +34,18 @@ const logsToTrace = (logs, epochStart) => {
     index,
     records
   ) => {
-    // TODO (amitd) wont be needed in RN .57
-    if (
-      name === "CREATE_MODULE_START" ||
-      name === "CONVERT_CONSTANTS_START" ||
-      name === "GET_CONSTANTS_START" ||
-      name === "INITIALIZE_MODULE_START"
-    ) {
-      // Some events like the above do not have all the information to be associated with the
-      // end event. In that case, we look for the first matching end event with the same name
-      // and assume that it would be the end event.
-      // This will be fixed in React Native soon
-      for (let i = index; i < records.length; i++) {
-        if (records[i].name === name.replace(/_START$/, "_END")) {
-          return records[i].time;
-        }
-      }
-    } else {
-      // For most events, we just look for the name, tag and instance to match, to
-      // find the closing event
-      const endEvents = records.filter(
-        e =>
-          e.name.endsWith("_END") &&
-          e.name.replace(/_END$/, "_START") === name &&
-          // Either the tag, or the instance, or both will match for the end tag
-          (e.tag ? e.tag === tag : e.instanceKey === instanceKey)
-      );
-      if (endEvents.length) {
-        return endEvents[0].time;
-      }
+    const endEvents = records.filter(
+      e =>
+        e.name.endsWith("_END") &&
+        e.name.replace(/_END$/, "_START") === name &&
+        // Either the tag, or the instance, or both will match for the end tag
+        (e.tag ? e.tag === tag : e.instanceKey === instanceKey)
+    );
+
+    if (endEvents.length) {
+      return endEvents[0].time;
     }
+
     if (__DEV__) {
       console.log(
         "Could not find the ending event for ",

@@ -54,13 +54,11 @@ public class NativeModuleRegistryBuilder {
         ModuleHolder moduleHolder;
         if (reactModuleInfo == null) {
           NativeModule module;
-          ReactMarker.logMarker(
-            ReactMarkerConstants.CREATE_MODULE_START,
-            moduleSpec.getClassName());
+          ReactMarker.logMarker(ReactMarkerConstants.CREATE_MODULE_START, moduleSpec.getClassName());
           try {
             module = moduleSpec.getProvider().get();
           } finally {
-            ReactMarker.logMarker(ReactMarkerConstants.CREATE_MODULE_END);
+            ReactMarker.logMarker(ReactMarkerConstants.CREATE_MODULE_END, moduleSpec.getClassName());
           }
           moduleHolder = new ModuleHolder(module);
         } else {

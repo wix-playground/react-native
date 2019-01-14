@@ -82,13 +82,11 @@ public abstract class LazyReactPackage implements ReactPackage {
       SystraceMessage.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "createNativeModule")
         .arg("module", holder.getType())
         .flush();
-      ReactMarker.logMarker(
-        ReactMarkerConstants.CREATE_MODULE_START,
-        holder.getClassName());
+      ReactMarker.logMarker(ReactMarkerConstants.CREATE_MODULE_START, holder.getClassName());
       try {
         nativeModule = holder.getProvider().get();
       } finally {
-        ReactMarker.logMarker(ReactMarkerConstants.CREATE_MODULE_END);
+        ReactMarker.logMarker(ReactMarkerConstants.CREATE_MODULE_END, holder.getClassName());
         SystraceMessage.endSection(TRACE_TAG_REACT_JAVA_BRIDGE).flush();
       }
       modules.add(nativeModule);

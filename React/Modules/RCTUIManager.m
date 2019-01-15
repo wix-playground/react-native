@@ -1126,7 +1126,7 @@ RCT_EXPORT_METHOD(dispatchViewManagerCommand:(nonnull NSNumber *)reactTag
 
   if (previousPendingUIBlocks.count) {
     // Execute the previously queued UI blocks
-    RCTProfileBeginFlowEvent();
+    RCTProfileBeginFlowEvent(@"Flow.flushUIBlocks", @"");
     RCTExecuteOnMainQueue(^{
       RCTProfileEndFlowEvent();
       RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways, @"-[UIManager flushUIBlocks]", (@{

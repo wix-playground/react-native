@@ -105,6 +105,42 @@ void* __wix_begin_loadModule(const char* moduleName)
   return (void*)CFBridgingRetain(rv);
 }
 
+void* __wix_begin_event_c(const char* eventName, const char* additionnalInfo);
+void* __wix_begin_event_c(const char* eventName, const char* additionnalInfo)
+{
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return NULL;
+  }
+  
+  id rv = __DTXProfilerMarkEventIntervalBegin(@"React Native", [NSString stringWithUTF8String:eventName], [NSString stringWithUTF8String:additionnalInfo]);
+  
+  return (void*)CFBridgingRetain(rv);
+}
+
+void* __wix_begin_jsprofiling_event_c(const char* eventName, const char* additionnalInfo);
+void* __wix_begin_jsprofiling_event_c(const char* eventName, const char* additionnalInfo)
+{
+  if(__DTXProfilerMarkEventIntervalBegin == NULL)
+  {
+    return NULL;
+  }
+  
+  id rv = __DTXProfilerMarkEventIntervalBegin(@"RN JS Profiling", [NSString stringWithUTF8String:eventName], [NSString stringWithUTF8String:additionnalInfo]);
+  
+  return (void*)CFBridgingRetain(rv);
+}
+
+void __wix_mark_event_c(const char* eventName, const char* additionnalInfo);
+void __wix_mark_event_c(const char* eventName, const char* additionnalInfo)
+{
+  if(__DTXProfilerMarkEvent == NULL)
+  {
+    return;
+  }
+  __DTXProfilerMarkEvent(@"React Native", [NSString stringWithUTF8String:eventName], 0, [NSString stringWithUTF8String:additionnalInfo]);
+}
+
 void* __wix_begin_adoptString(const unsigned long long int stringLength);
 void* __wix_begin_adoptString(const unsigned long long int stringLength)
 {

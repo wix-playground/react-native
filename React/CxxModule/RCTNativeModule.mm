@@ -50,7 +50,7 @@ std::vector<MethodDescriptor> RCTNativeModule::getMethods() {
 
 folly::dynamic RCTNativeModule::getConstants() {
   RCT_PROFILE_BEGIN_EVENT(RCTProfileTagAlways,
-    @"[RCTNativeModule getConstants] moduleData.exportedConstants", nil);
+                          @"[RCTNativeModule getConstants] moduleData.exportedConstants", @{@"module": NSStringFromClass(m_moduleData.moduleClass)});
   NSDictionary *constants = m_moduleData.exportedConstants;
   folly::dynamic ret = convertIdToFollyDynamic(constants);
   RCT_PROFILE_END_EVENT(RCTProfileTagAlways, @"");

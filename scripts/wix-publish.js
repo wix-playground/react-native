@@ -4,11 +4,10 @@ const release = require('./bump-oss-version');
 
 const releaseVersion = generateVersion();
 const releaseVersionNew = generateVersionNew();
-echo(`newVersion: ${releaseVersionNew}`);
 
 set('-e');
-
-echo(`Building ${releaseVersion}, make sure you are using the private artifactory credentials`);
+echo(`newVersion: ${releaseVersionNew}`);
+echo(`Building4 ${releaseVersion}, make sure you are using the private artifactory credentials`);
 release.bumpVersion(releaseVersion.version);
 exec('./gradlew :ReactAndroid:installArchives --debug');
 

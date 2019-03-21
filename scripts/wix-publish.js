@@ -10,7 +10,7 @@ releaseVersion.raw = releaseVersion.version;
 set('-e');
 echo(`Building ${releaseVersion}, make sure you are using the private artifactory credentials`);
 release.bumpVersion(releaseVersion.version);
-exec('./gradlew :ReactAndroid:installArchives');
+exec('./gradlew :ReactAndroid:installArchives --debug');
 echo(`Publishing to npm ${releaseVersion}...`);
 exec('npm publish');
 release.commitAndPush(releaseVersion.version);

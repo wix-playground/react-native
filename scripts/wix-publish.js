@@ -1,4 +1,5 @@
 require('shelljs/global');
+const _ = require('lodash');
 const semver = require('semver');
 const release = require('./bump-oss-version');
 

@@ -3,22 +3,27 @@ const _ = require('lodash');
 const semver = require('semver');
 const release = require('./bump-oss-version');
 
-const releaseVersion = generateVersion();
-const releaseVersionNew = generateVersionNew();
 
-set('-e');
-echo(`newVersion: ${releaseVersionNew}`);
-echo(`Building4 ${releaseVersion}, make sure you are using the private artifactory credentials`);
-release.bumpVersion(releaseVersion.version);
-exec('./gradlew :ReactAndroid:installArchives --debug');
+publishWixReactNative();
 
-echo(`Publishing to npm ${releaseVersion}... fake`);
-//exec('npm publish');
+function publishWixReactNative(){
+  const releaseVersion = generateVersion();
+  const releaseVersionNew = generateVersionNew();
 
-echo(`commitAndPush ${releaseVersion}... fake`);
-//release.commitAndPush(releaseVersion.version);
+  set('-e');
+  echo(`newVersion: ${releaseVersionNew}`);
+  echo(`Building4 ${releaseVersion}, make sure you are using the private artifactory credentials`);
+  release.bumpVersion(releaseVersion.version);
+  exec('./gradlew :ReactAndroid:installArchives --debug');
 
-echo(`##teamcity[version: ${releaseVersion}]`);
+  echo(`Publishing to npm ${releaseVersion}... fake`);
+  //exec('npm publish');
+
+  echo(`commitAndPush ${releaseVersion}... fake`);
+  //release.commitAndPush(releaseVersion.version);
+
+  echo(`##teamcity[version: ${releaseVersion}]`);
+}
 
 
 function generateVersion() {
@@ -38,7 +43,7 @@ function generateVersionNew() {
   const numberAndCounter = _.split(process.env.BUILD_NUMBER, '#');
   const buildCounter = _.get(numberAndCounter, [1], 1);
 
-  releaseVersion.version = `${releaseVersion.major}.${releaseVersion.minor}.${releaseVersion.patch}.-wix.${wixMajor}.${wixMinor}-build.${buildCounter}`;
+  releaseVersion.version = `${releaseVersion.major}.${releaseVersion.minor}.${releaseVersion.patch}-wix.${wixMajor}.${wixMinor}-build.${buildCounter}`;
   return releaseVersion.version;
 }
 

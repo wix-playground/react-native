@@ -13,7 +13,7 @@ function publishWixReactNative(){
   set('-e');
   echo(`Building4 ${releaseVersion}, make sure you are using the private artifactory credentials`);
   release.bumpVersion(releaseVersion.version);
-  exec('./gradlew :ReactAndroid:installArchives --debug');
+  exec('./gradlew :ReactAndroid:installArchives --debug --stacktrace');
 
   echo(`Publishing to npm ${releaseVersion}... fake`);
   //exec('npm publish');

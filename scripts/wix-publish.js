@@ -11,7 +11,6 @@ function publishWixReactNative(){
   const releaseVersionNew = generateVersionNew();
 
   set('-e');
-  echo(`newVersion: ${releaseVersionNew}`);
   echo(`Building4 ${releaseVersion}, make sure you are using the private artifactory credentials`);
   release.bumpVersion(releaseVersion.version);
   exec('./gradlew :ReactAndroid:installArchives --debug');
@@ -28,10 +27,11 @@ function publishWixReactNative(){
 
 function generateVersion() {
   let currentVersion = require('../package.json').version;
-  let releaseVersion = semver.parse(currentVersion);
-  releaseVersion.patch += 100;
-  releaseVersion.version = `${releaseVersion.major}.${releaseVersion.minor}.${releaseVersion.patch}`;
-  releaseVersion.raw = releaseVersion.version;
+  let newVersion = semver.parse(currentVersion);
+  newVersion.patch += 100;
+  newVersion.version = `${newVersion.major}.${newVersion.minor}.${newVersion.patch}`;
+  newVersion.raw = newVersion.version;
+  return newVersion;
 }
 
 function generateVersionNew() {
@@ -44,7 +44,8 @@ function generateVersionNew() {
   const buildCounter = _.get(numberAndCounter, [1], 1);
 
   releaseVersion.version = `${releaseVersion.major}.${releaseVersion.minor}.${releaseVersion.patch}-wix.${wixMajor}.${wixMinor}-build.${buildCounter}`;
-  return releaseVersion.version;
+  echo(`newVersion: ${releaseVersion.version}`);
+  return releaseVersion;
 }
 
 

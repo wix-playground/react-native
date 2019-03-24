@@ -11,11 +11,11 @@ echo(`Building4 ${releaseVersion}, make sure you are using the private artifacto
 release.bumpVersion(releaseVersion.version);
 exec('./gradlew :ReactAndroid:installArchives --debug');
 
-echo(`Publishing to npm ${releaseVersion}...`);
-exec('npm publish');
+echo(`Publishing to npm ${releaseVersion}... fake`);
+//exec('npm publish');
 
-echo(`commitAndPush ${releaseVersion}...`);
-release.commitAndPush(releaseVersion.version);
+echo(`commitAndPush ${releaseVersion}... fake`);
+//release.commitAndPush(releaseVersion.version);
 
 echo(`##teamcity[version: ${releaseVersion}]`);
 

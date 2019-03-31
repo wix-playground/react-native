@@ -129,11 +129,6 @@ const ComponentExamples: Array<RNTesterExample> = [
     supportsTVOS: false,
   },
   {
-    key: 'SwipeableFlatListExample',
-    module: require('./SwipeableFlatListExample'),
-    supportsTVOS: false,
-  },
-  {
     key: 'SwitchExample',
     module: require('./SwitchExample'),
     supportsTVOS: false,
@@ -162,11 +157,6 @@ const ComponentExamples: Array<RNTesterExample> = [
     key: 'ViewExample',
     module: require('./ViewExample'),
     supportsTVOS: true,
-  },
-  {
-    key: 'WebViewExample',
-    module: require('./WebViewExample'),
-    supportsTVOS: false,
   },
 ];
 

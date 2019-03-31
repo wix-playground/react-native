@@ -81,6 +81,7 @@ public class FabricUIManager implements UIManager, LifecycleEventListener {
     sComponentNames.put("ScrollView", "RCTScrollView");
     sComponentNames.put("Slider", "RCTSlider");
     sComponentNames.put("ReactPerformanceLoggerFlag", "ReactPerformanceLoggerFlag");
+    sComponentNames.put("ReactTTRCRenderFlag", "ReactTTRCRenderFlag");
     sComponentNames.put("Paragraph", "RCTText");
     sComponentNames.put("Text", "RCText");
     sComponentNames.put("RawText", "RCTRawText");
@@ -114,7 +115,6 @@ public class FabricUIManager implements UIManager, LifecycleEventListener {
 
   private long mRunStartTime = 0l;
   private long mBatchedExecutionTime = 0l;
-  private long mNonBatchedExecutionTime = 0l;
   private long mDispatchViewUpdatesTime = 0l;
   private long mCommitStartTime = 0l;
   private long mLayoutTime = 0l;
@@ -348,7 +348,6 @@ public class FabricUIManager implements UIManager, LifecycleEventListener {
 
   @UiThread
   private void dispatchPreMountItems(long frameTimeNanos) {
-    long nonBatchedExecutionStartTime = SystemClock.uptimeMillis();
     Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "FabricUIManager::premountViews");
 
     while (true) {
@@ -367,7 +366,6 @@ public class FabricUIManager implements UIManager, LifecycleEventListener {
 
       preMountItemsToDispatch.execute(mMountingManager);
     }
-    mNonBatchedExecutionTime = SystemClock.uptimeMillis() - nonBatchedExecutionStartTime;
     Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
   }
 
@@ -447,7 +445,6 @@ public class FabricUIManager implements UIManager, LifecycleEventListener {
     performanceCounters.put("DispatchViewUpdatesTime", mDispatchViewUpdatesTime);
     performanceCounters.put("RunStartTime", mRunStartTime);
     performanceCounters.put("BatchedExecutionTime", mBatchedExecutionTime);
-    performanceCounters.put("NonBatchedExecutionTime", mNonBatchedExecutionTime);
     performanceCounters.put("FinishFabricTransactionTime", mFinishTransactionTime);
     performanceCounters.put("FinishFabricTransactionCPPTime", mFinishTransactionCPPTime);
     return performanceCounters;
